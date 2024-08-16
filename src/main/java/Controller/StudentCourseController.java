@@ -1,65 +1,74 @@
 package Controller;
 
-import java.util.List;
-
-import javax.print.attribute.standard.MediaSize.Other;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import Entity.Course;
 import Entity.Student;
 import Repository.CourseRepository;
 import Repository.StudentRepository;
 
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
 @RequestMapping("/student/course")
 public class StudentCourseController {
 
-	
-	private StudentRepository studentRepository;
-	
-	
-	private CourseRepository courseRepository;
+    private final StudentRepository studentRepository;
+    private final CourseRepository courseRepository;
 
+    public StudentCourseController(StudentRepository studentRepository, CourseRepository courseRepository) {
+        this.studentRepository = studentRepository;
+        this.courseRepository = courseRepository;
+    }
 
-	public StudentCourseController(StudentRepository studentRepository, CourseRepository courseRepository) {
-		
-		this.studentRepository = studentRepository;
-		this.courseRepository = courseRepository;
-	}
-	@PostMapping
-	public Student saveStudentwithCourse(@RequestBody Student student) {
-		return studentRepository.save(student);
-		
-	}
-	
-	@GetMapping
-	public List<Student> findAllStudent(){
-		return studentRepository.findAll();
-	}
-	@GetMapping("/{studentid}")
-	public Student findStudent(@PathVariable Long studentId) {
-		return studentRepository.findById(studentId).orElse(null);
-		
-	}
-	@GetMapping("/find{name}")
-	public List<Student> findStudentsContainingByName(@PathVariable String name){
-		return  studentRepository.findByNameContaining(name);
-		
-	}
-	@GetMapping("/search/{price}")
-	public List<Course> findCoursesLessThanprice(@PathVariable double price){
-		return courseRepository.findByFeeLessThan(price);
-		
-	}
-	
-	
-	
-	
+    @PostMapping
+    public Student saveStudentwithCourse(@RequestBody Student student) {
+        return studentRepository.save(student);
+    }
+
+    @GetMapping
+    public Page<Student> findAllStudent(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(sortDir), sortBy);
+        return studentRepository.findAll(pageable);
+    }
+
+    @GetMapping("/{studentId}")
+    public Student findStudent(@PathVariable Long studentId) {
+        return studentRepository.findById(studentId).orElse(null);
+    }
+
+    @GetMapping("/find{name}")
+    public Page<Student> findStudentsContainingByName(
+            @PathVariable String name,
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(sortDir), sortBy);
+        return studentRepository.findByNameContaining(name, pageable);
+    }
+
+    @GetMapping("/search/{price}")
+    public Page<Course> findCoursesLessThanprice(
+            @PathVariable double price,
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam String sortBy,
+            @RequestParam String sortDir) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(sortDir), sortBy);
+        return courseRepository.findByFeeLessThan(price, pageable);
+    }
 }
